@@ -1,4 +1,5 @@
 
-UTC Snake/\.vs/
+UTC Snake/\.vs
 
-UTC Snake/Snake/obj/
+UTC Snake/Snake/obj
+UTC Snake/Snake/bin/Debug/\.vs

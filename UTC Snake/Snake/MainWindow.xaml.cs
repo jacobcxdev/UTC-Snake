@@ -314,6 +314,8 @@ namespace Snake {
                 foreach (Position playerPos in playerPos) {
                     if (position.X == playerPos.X && position.Y == playerPos.Y) {
                         isUnderSnake = true;
+                    } else {
+                        isUnderSnake = false;
                     }
                 }
             } while (isUnderSnake);
