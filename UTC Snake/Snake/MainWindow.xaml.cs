@@ -14,6 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using System.Reflection;
 
 namespace Snake {
     /// <summary>
@@ -37,33 +38,50 @@ namespace Snake {
         }
 
         Geometry geo = new Geometry();
-        List<Position> playerPos = new List<Position> { };
-        Position fruitPos = new Position();
-        DispatcherTimer timer = new DispatcherTimer();
+
+        List<Position> playerPos = new List<Position>();
+        List<Position> fruitPos = new List<Position>();
+
+        Dictionary<string, List<List<Position>>> icons = new Dictionary<string, List<List<Position>>> {
+            { "1", new List<List<Position>> { new List<Position>(), new List<Position>() } },
+            { "2", new List<List<Position>> { new List<Position>(), new List<Position>() } },
+            { "3", new List<List<Position>> { new List<Position>(), new List<Position>() } },
+            { "pause", new List<List<Position>> { new List<Position>(), new List<Position>() } }
+        };
+        Dictionary<string, ContentControl> iconsOrig = new Dictionary<string, ContentControl>();
+
+        DispatcherTimer timer = new DispatcherTimer() {
+            Interval = TimeSpan.FromMilliseconds(200)
+        };
 
 
         bool isInGame = false;
         bool isPaused = false;
+        bool isCountingDown = false;
         int pendingDirection = 0;
         int direction = 0;
         int score = 0;
         int highscore = 0;
 
 
-        private void setSquareColor(Position position, SolidColorBrush color) {
+        private IEnumerable<ContentControl> GetSquare(Position position) {
             var currentSquare = playArea.Children
                                  .OfType<ContentControl>()
                                  .Where(z => z.Name.StartsWith(String.Format("playSquare_{0}_{1}_", position.X, position.Y)));
+
+            return currentSquare;
+        }
+
+        private void SetSquareColor(Position position, SolidColorBrush color) {
+            var currentSquare = GetSquare(position);
 
             foreach (var label in currentSquare) {
                 label.Background = color;
             }
         }
 
-        private void setSquareContent(Position position, string content, HorizontalAlignment hAlign = HorizontalAlignment.Center, VerticalAlignment vAlign = VerticalAlignment.Center) {
-            var currentSquare = playArea.Children
-                                 .OfType<ContentControl>()
-                                 .Where(z => z.Name.StartsWith(String.Format("playSquare_{0}_{1}_", position.X, position.Y)));
+        private void SetSquareContent(Position position, object content, HorizontalAlignment hAlign = HorizontalAlignment.Center, VerticalAlignment vAlign = VerticalAlignment.Center) {
+            var currentSquare = GetSquare(position);
 
             foreach (var playSquare in currentSquare) {
                 playSquare.HorizontalContentAlignment = hAlign;
@@ -73,23 +91,26 @@ namespace Snake {
             }
         }
 
-        private void loaded(object sender, RoutedEventArgs e) {
+        private void Window_Loaded(object sender, RoutedEventArgs e) {
             for (int i = 0; i < geo.MaxX; i++) {
                 for (int j = 0; j < geo.MaxY; j++) {
-                    ColumnDefinition column = new ColumnDefinition();
-                    column.Width = GridLength.Auto;
-                    RowDefinition row = new RowDefinition();
-                    row.Height = GridLength.Auto;
+                    ColumnDefinition column = new ColumnDefinition {
+                        Width = GridLength.Auto
+                    };
+                    RowDefinition row = new RowDefinition {
+                        Height = GridLength.Auto
+                    };
 
-                    Label playSquare = new Label();
-                    playSquare.Width = geo.Width;
-                    playSquare.Height = geo.Width;
-                    playSquare.Background = new SolidColorBrush(Colors.Black);
-                    playSquare.Name = String.Format("playSquare_{0}_{1}_", i, j);
-                    playSquare.Padding = new Thickness(0);
-                    playSquare.HorizontalContentAlignment = HorizontalAlignment.Center;
-                    playSquare.VerticalContentAlignment = VerticalAlignment.Center;
-                    
+                    Label playSquare = new Label {
+                        Width = geo.Width,
+                        Height = geo.Width,
+                        Background = new SolidColorBrush(Colors.Black),
+                        Name = String.Format("playSquare_{0}_{1}_", i, j),
+                        Padding = new Thickness(0),
+                        HorizontalContentAlignment = HorizontalAlignment.Center,
+                        VerticalContentAlignment = VerticalAlignment.Center
+                    };
+
                     playArea.ColumnDefinitions.Add(column);
                     playArea.RowDefinitions.Add(row);
                     playArea.Children.Add(playSquare);
@@ -99,20 +120,182 @@ namespace Snake {
                 }
             }
 
-            updateScore();
+            Dictionary<int, int[]> one = new Dictionary<int, int[]> {
+                { 0, new int[] { 0, 0, 1, 0, 0 } },
+                { 1, new int[] { 0, 1, 1, 0, 0 } },
+                { 2, new int[] { 1, 0, 1, 0, 0 } },
+                { 3, new int[] { 0, 0, 1, 0, 0 } },
+                { 4, new int[] { 1, 1, 1, 1, 1 } },
+            };
 
-            timer.Interval = TimeSpan.FromMilliseconds(200);
-            timer.Tick += timerEvent;
+            for (int i = 0; i < one.Count; i++)
+                for (int j = 0; j < one.Count; j++) {
+                    Position position = new Position {
+                        X = geo.MaxX / 2 - one.Count / 2 + j,
+                        Y = geo.MaxY / 2 - one.Count / 2 + i
+                    };
+                    switch (one[i][j]) {
+                        case (0):
+                            icons["1"][0].Add(position);
+                            break;
+                        case (1):
+                            icons["1"][1].Add(position);
+                            break;
+                    }
+                }
+
+            Dictionary<int, int[]> two = new Dictionary<int, int[]> {
+                { 0, new int[] { 0, 1, 1, 1, 0 } },
+                { 1, new int[] { 1, 0, 0, 0, 1 } },
+                { 2, new int[] { 0, 0, 1, 1, 0 } },
+                { 3, new int[] { 0, 1, 0, 0, 0 } },
+                { 4, new int[] { 1, 1, 1, 1, 1 } },
+            };
+
+            for (int i = 0; i < two.Count; i++)
+                for (int j = 0; j < two.Count; j++) {
+                    Position position = new Position {
+                        X = geo.MaxX / 2 - two.Count / 2 + j,
+                        Y = geo.MaxY / 2 - two.Count / 2 + i
+                    };
+                    switch (two[i][j]) {
+                        case (0):
+                            icons["2"][0].Add(position);
+                            break;
+                        case (1):
+                            icons["2"][1].Add(position);
+                            break;
+                    }
+                }
+
+            Dictionary<int, int[]> three = new Dictionary<int, int[]> {
+                { 0, new int[] { 0, 1, 1, 1, 0 } },
+                { 1, new int[] { 1, 0, 0, 0, 1 } },
+                { 2, new int[] { 0, 0, 1, 1, 0 } },
+                { 3, new int[] { 1, 0, 0, 0, 1 } },
+                { 4, new int[] { 0, 1, 1, 1, 0 } },
+            };
+
+            for (int i = 0; i < three.Count; i++)
+                for (int j = 0; j < three.Count; j++) {
+                    Position position = new Position {
+                        X = geo.MaxX / 2 - three.Count / 2 + j,
+                        Y = geo.MaxY / 2 - three.Count / 2 + i
+                    };
+                    switch (three[i][j]) {
+                        case (0):
+                            icons["3"][0].Add(position);
+                            break;
+                        case (1):
+                            icons["3"][1].Add(position);
+                            break;
+                    }
+                }
+
+            Dictionary<int, int[]> pause = new Dictionary<int, int[]> {
+                { 0, new int[] { 1, 1, 0, 1, 1 } },
+                { 1, new int[] { 1, 1, 0, 1, 1 } },
+                { 2, new int[] { 1, 1, 0, 1, 1 } },
+                { 3, new int[] { 1, 1, 0, 1, 1 } },
+                { 4, new int[] { 1, 1, 0, 1, 1 } },
+            };
+
+            for (int i = 0; i < pause.Count; i++)
+                for (int j = 0; j < pause.Count; j++) {
+                    Position position = new Position {
+                        X = geo.MaxX / 2 - pause.Count / 2 + j,
+                        Y = geo.MaxY / 2 - pause.Count / 2 + i
+                    };
+                    switch (pause[i][j]) {
+                        case (0):
+                            icons["pause"][0].Add(position);
+                            break;
+                        case (1):
+                            icons["pause"][1].Add(position);
+                            break;
+                    }
+                }
+
+            timer.Tick += TimerEvent;
+
+            UpdateScore();
+
+            play.Focus();
         }
 
-        private void playPause_Click(object sender, RoutedEventArgs e) {
-            if (isInGame && isPaused) {
-                timer.Start();
-                isPaused = false;
+        private void CopyControl(Control sourceControl, Control targetControl) {
+            if (sourceControl.GetType() != targetControl.GetType()) {
+                throw new Exception("Incorrect control types");
+            }
+
+            foreach (PropertyInfo sourceProperty in sourceControl.GetType().GetProperties()) {
+                object newValue = sourceProperty.GetValue(sourceControl, null);
+
+                MethodInfo mi = sourceProperty.GetSetMethod(true);
+                if (mi != null) {
+                    sourceProperty.SetValue(targetControl, newValue, null);
+                }
+            }
+        }
+
+        private void Paint(List<List<Position>> positions, SolidColorBrush color1) {
+            for (int i = 0; i < positions.Count; i++)
+                for (int j = 0; j < positions[i].Count; j++) {
+                    var currentSquare = GetSquare(positions[i][j]);
+
+                    foreach (var label in currentSquare) {
+                        var copy = new Label();
+                        CopyControl(label, copy);
+                        iconsOrig[String.Format("{0}_{1}", i.ToString(), j.ToString())] = copy;
+                    }
+
+                    switch (i) {
+                        case (0):
+                            break;
+                        case (1):
+                            SetSquareColor(positions[i][j], color1);
+                            SetSquareContent(positions[i][j], null);
+                            break;
+                    }
+                }
+        }
+
+        private void Wash(List<List<Position>> positions) {
+            for (int i = 0; i < positions.Count; i++)
+                for (int j = 0; j < positions[i].Count; j++) {
+                    SetSquareColor(positions[i][j], (SolidColorBrush)iconsOrig[String.Format("{0}_{1}", i.ToString(), j.ToString())].Background);
+                    ArrowFromDirection();
+                }
+            iconsOrig = new Dictionary<string, ContentControl>();
+        }
+
+        private void PauseIcon() {
+            isPaused = true;
+            timer.Stop();
+            Paint(icons["pause"], new SolidColorBrush(Colors.SlateGray));
+        }
+
+        private async void PlayIcon() {
+            isCountingDown = true;
+            Wash(icons["pause"]);
+            for (int i = 3; i > 0; i--) {
+                Paint(icons[i.ToString()], new SolidColorBrush(Colors.SlateGray));
+                await Task.Delay(1000);
+                Wash(icons[i.ToString()]);
+            }
+            timer.Start();
+            isPaused = false;
+            isCountingDown = false;
+        }
+
+        private void PlayPause_Click(object sender, RoutedEventArgs e) {
+            if (isCountingDown) {
+                return;
+            } else if (isInGame && isPaused) {
+                PlayIcon();
                 return;
             } else if (isInGame && !isPaused) {
-                timer.Stop();
-                isPaused = true;
+                PauseIcon();
                 return;
             }
 
@@ -120,45 +303,48 @@ namespace Snake {
                 playSquare.Background = new SolidColorBrush(Colors.Black);
             }
 
-            reset();
-            newGame();
+            Reset();
+            NewGame();
         }
 
-        private void reset() {
+        private void Reset() {
             timer.Stop();
             isInGame = false;
 
-            playerPos = new List<Position> { };
+            playerPos = new List<Position>();
+            fruitPos = new List<Position>();
             pendingDirection = 0;
             direction = 0;
             score = 0;
         }
 
-        private void newGame() {
+        private void NewGame() {
             isInGame = true;
 
-            playerPos.Add(randomPosition(geo.MaxX / 2));
-            setSquareColor(playerPos[0], new SolidColorBrush(Colors.Red));
+            playerPos.Add(RandomPosition(geo.MaxX / 2));
+            SetSquareColor(playerPos[0], new SolidColorBrush(Colors.Red));
 
-            placeFruit(true);
+            PlaceFruit(null, true);
             
             timer.Start();
-            updateScore();
+            UpdateScore();
         }
 
-        private void timerEvent(object sender, EventArgs e) {
-            move();
+        private void TimerEvent(object sender, EventArgs e) {
+            Move();
         }
 
-        private void move(int distance = 1) {
-            List<Position> playerPosOrig = new List<Position> { };
+        private void Move(int distance = 1) {
+            List<Position> playerPosOrig = new List<Position>();
 
             foreach (Position position in playerPos) {
-                setSquareColor(position, new SolidColorBrush(Colors.Black));
+                SetSquareColor(position, new SolidColorBrush(Colors.Black));
+                SetSquareContent(position, null);
 
-                Position orig = new Position();
-                orig.X = position.X;
-                orig.Y = position.Y;
+                Position orig = new Position {
+                    X = position.X,
+                    Y = position.Y
+                };
                 playerPosOrig.Add(orig);
             }
 
@@ -166,143 +352,165 @@ namespace Snake {
 
             switch (direction) {
                 case (0):
-                    Position newPos0 = new Position();
-                    newPos0.X = playerPos[0].X;
-                    newPos0.Y = playerPos[0].Y - distance;
+                    Position newPos0 = new Position {
+                        X = playerPos[0].X,
+                        Y = playerPos[0].Y - distance
+                    };
                     if (newPos0.Y >= 0 && newPos0.Y < geo.MaxX) {
                         foreach (Position position in playerPos) {
                             if (position.X == newPos0.X && position.Y == newPos0.Y) {
-                                reset();
+                                Reset();
                                 return;
                             }
                             position.Y -= distance;
                         }
                     } else {
-                        reset();
+                        Reset();
                         return;
                     }
                     break;
                 case (1):
-                    Position newPos1 = new Position();
-                    newPos1.X = playerPos[0].X;
-                    newPos1.Y = playerPos[0].Y + distance;
+                    Position newPos1 = new Position {
+                        X = playerPos[0].X,
+                        Y = playerPos[0].Y + distance
+                    };
                     if (newPos1.Y >= 0 && newPos1.Y < geo.MaxX) {
                         foreach (Position position in playerPos) {
                             if (position.X == newPos1.X && position.Y == newPos1.Y) {
-                                reset();
+                                Reset();
                                 return;
                             }
                             position.Y += distance;
                         }
                     } else {
-                        reset();
+                        Reset();
                         return;
                     }
                     break;
                 case (2):
-                    Position newPos2 = new Position();
-                    newPos2.X = playerPos[0].X - distance;
-                    newPos2.Y = playerPos[0].Y;
+                    Position newPos2 = new Position {
+                        X = playerPos[0].X - distance,
+                        Y = playerPos[0].Y
+                    };
                     if (newPos2.X >= 0 && newPos2.X < geo.MaxX) {
                         foreach (Position position in playerPos) {
                             if (position.X == newPos2.X && position.Y == newPos2.Y) {
-                                reset();
+                                Reset();
                                 return;
                             }
                             position.X -= distance;
                         }
                     } else {
-                        reset();
+                        Reset();
                         return;
                     }
                     break;
                 case (3):
-                    Position newPos3 = new Position();
-                    newPos3.X = playerPos[0].X + distance;
-                    newPos3.Y = playerPos[0].Y;
+                    Position newPos3 = new Position {
+                        X = playerPos[0].X + distance,
+                        Y = playerPos[0].Y
+                    };
                     if (newPos3.X >= 0 && newPos3.X < geo.MaxX) {
                         foreach (Position position in playerPos) {
                             if (position.X == newPos3.X && position.Y == newPos3.Y) {
-                                reset();
+                                Reset();
                                 return;
                             }
                             position.X += distance;
                         }
                     } else {
-                        reset();
+                        Reset();
                         return;
                     }
                     break;
             }
 
-            if (fruitPos.X == playerPos[0].X && fruitPos.Y == playerPos[0].Y) {
-                addBody(playerPosOrig[0]);
-                updateScore(1);
-            }
+            PlaceFruit(playerPosOrig[0]);
 
             for (int i = 0; i < playerPos.Count; i++) {
                 if (i != 0) {
                     playerPos[i] = playerPosOrig[i - 1];
                 }
-                setSquareContent(playerPos[i], null);
-                setSquareColor(playerPos[i], new SolidColorBrush(Colors.Red));
+                SetSquareContent(playerPos[i], null);
+                SetSquareColor(playerPos[i], new SolidColorBrush(Colors.Red));
             }
 
-
-            arrowFromDirection();
-
-            placeFruit();
+            ArrowFromDirection();
         }
 
-        private void arrowFromDirection() {
+        private void ArrowFromDirection() {
             switch (pendingDirection) {
                 case (0):
-                    setSquareContent(playerPos[0], "▴", HorizontalAlignment.Center, VerticalAlignment.Top);
+                    SetSquareContent(playerPos[0], "▴", HorizontalAlignment.Center, VerticalAlignment.Top);
                     break;
                 case (1):
-                    setSquareContent(playerPos[0], "▾", HorizontalAlignment.Center, VerticalAlignment.Bottom);
+                    SetSquareContent(playerPos[0], "▾", HorizontalAlignment.Center, VerticalAlignment.Bottom);
                     break;
                 case (2):
-                    setSquareContent(playerPos[0], "◂", HorizontalAlignment.Left, VerticalAlignment.Center);
+                    SetSquareContent(playerPos[0], "◂", HorizontalAlignment.Left, VerticalAlignment.Center);
                     break;
                 case (3):
-                    setSquareContent(playerPos[0], "▸", HorizontalAlignment.Right, VerticalAlignment.Center);
+                    SetSquareContent(playerPos[0], "▸", HorizontalAlignment.Right, VerticalAlignment.Center);
                     break;
             }
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e) {
-            if (isInGame) {
+            if (isInGame && !isPaused) {
                 switch (e.Key) {
                     case (Key.W):
                         if (direction != 1) {
                             pendingDirection = 0;
-                            arrowFromDirection();
+                            ArrowFromDirection();
                         }
                         break;
                     case (Key.S):
                         if (direction != 0) {
                             pendingDirection = 1;
-                            arrowFromDirection();
+                            ArrowFromDirection();
                         }
                         break;
                     case (Key.A):
                         if (direction != 3) {
                             pendingDirection = 2;
-                            arrowFromDirection();
+                            ArrowFromDirection();
                         }
                         break;
                     case (Key.D):
                         if (direction != 2) {
                             pendingDirection = 3;
-                            arrowFromDirection();
+                            ArrowFromDirection();
+                        }
+                        break;
+                    case (Key.Up):
+                        if (direction != 1) {
+                            pendingDirection = 0;
+                            ArrowFromDirection();
+                        }
+                        break;
+                    case (Key.Down):
+                        if (direction != 0) {
+                            pendingDirection = 1;
+                            ArrowFromDirection();
+                        }
+                        break;
+                    case (Key.Left):
+                        if (direction != 3) {
+                            pendingDirection = 2;
+                            ArrowFromDirection();
+                        }
+                        break;
+                    case (Key.Right):
+                        if (direction != 2) {
+                            pendingDirection = 3;
+                            ArrowFromDirection();
                         }
                         break;
                 }
             }
         }
 
-        private Position randomPosition(int minDistanceFromEdge = 0) {
+        private Position RandomPosition(int minDistanceFromEdge = 0) {
             Random rnd = new Random();
             Position position = new Position();
             bool isUnderSnake = false;
@@ -323,28 +531,43 @@ namespace Snake {
             return position;
         }
 
-        private void placeFruit(bool genNew = false) {
+        private void PlaceFruit(Position originalPosition = null, bool genNew = false) {
+            List<Position> rm = new List<Position>();
+            foreach (Position fruitPosition in fruitPos) {
+                if (playerPos[0].X == fruitPosition.X && playerPos[0].Y == fruitPosition.Y) {
+                    genNew = true;
+                    rm.Add(fruitPosition);
+                } else {
+                    SetSquareColor(fruitPosition, new SolidColorBrush(Colors.Green));
+                }
+            }
+            foreach (Position rmPos in rm) {
+                fruitPos.Remove(rmPos);
+            }
             if (genNew) {
-                fruitPos = randomPosition();
+                Position position = RandomPosition();
+                fruitPos.Add(position);
+                SetSquareColor(position, new SolidColorBrush(Colors.Green));
+                
+                if (originalPosition != null) {
+                    playerPos.Add(AddBody(originalPosition));
+                    UpdateScore(1);
+                }
             }
-            while (fruitPos.X == playerPos[0].X && fruitPos.Y == playerPos[0].Y) {
-                fruitPos = randomPosition();
-            }
-            setSquareColor(fruitPos, new SolidColorBrush(Colors.Green));
         }
 
-        private void addBody(Position originalPosition) {
+        private Position AddBody(Position originalPosition) {
             int xDif = playerPos[0].X - originalPosition.X;
             int yDif = playerPos[0].Y - originalPosition.Y;
-            Position position = new Position();
+            Position position = new Position {
+                X = playerPos.Last().X - xDif,
+                Y = playerPos.Last().Y - yDif
+            };
 
-            position.X = playerPos.Last().X - xDif;
-            position.Y = playerPos.Last().Y - yDif;
-
-            playerPos.Add(position);
+            return position;
         }
 
-        private void updateScore(int add = 0) {
+        private void UpdateScore(int add = 0) {
             score += add;
             scoreLabel.Content = String.Format("Score : {0}", score);
             if (score >= highscore) {

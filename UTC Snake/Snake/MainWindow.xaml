@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Snake"
         mc:Ignorable="d"
-        Title="Snake!" SizeToContent="WidthAndHeight" Loaded="loaded" Background="#FF121212" KeyDown="Window_KeyDown">
+        Title="Snake" SizeToContent="WidthAndHeight" Loaded="Window_Loaded" Background="#FF121212" KeyDown="Window_KeyDown">
     <Grid HorizontalAlignment="Center">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -23,7 +23,7 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
 
-            <Button x:Name="play" Grid.Row="0" Grid.Column="0" Content="&#x23ef;" Click="playPause_Click" />
+            <Button x:Name="play" Grid.Row="0" Grid.Column="0" Content="&#x23ef;" Click="PlayPause_Click" />
             <Label x:Name="scoreLabel" Grid.Row="0" Grid.Column="2" Foreground="White" HorizontalAlignment="Center"></Label>
             <Label x:Name="highScoreLabel" Grid.Row="0" Grid.Column="3" Foreground="White" HorizontalAlignment="Center"></Label>
         </Grid>
