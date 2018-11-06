@@ -559,6 +559,9 @@ namespace Snake {
         private void Window_KeyDown(object sender, KeyEventArgs e) {
             if (isInGame && !isPaused) {
                 switch (e.Key) {
+                    case (Key.Space):
+                        playPauseButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        break;
                     case (Key.W):
                         if (direction != 1) {
                             pendingDirection = 0;

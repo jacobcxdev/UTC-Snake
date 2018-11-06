@@ -26,15 +26,15 @@
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
 
-                <Button x:Name="playPauseButton" Grid.Row="0" Grid.Column="0" Content="&#x23ef;" Click="PlayPauseButton_Click" />
-                <Button x:Name="settingsButton" Grid.Row="0" Grid.Column="1" Content="&#x2699;" Click="SettingsButton_Click" />
+                <Button x:Name="playPauseButton" Grid.Row="0" Grid.Column="0" Content="&#x23ef;" Click="PlayPauseButton_Click"/>
+                <Button x:Name="settingsButton" Grid.Row="0" Grid.Column="1" Content="&#x2699;" Click="SettingsButton_Click" Focusable="False"/>
                 <Label x:Name="scoreLabel" Grid.Row="0" Grid.Column="2" Foreground="White" HorizontalAlignment="Center"></Label>
                 <Label x:Name="highScoreLabel" Grid.Row="0" Grid.Column="3" Foreground="White" HorizontalAlignment="Center"></Label>
 
-                <Slider x:Name="playAreaSizeSlider" Grid.Row="1" Grid.Column="0" SmallChange="2" Maximum="75" Minimum="11" TickPlacement="TopLeft" LargeChange="10" TickFrequency="2" IsSnapToTickEnabled="True" ValueChanged="PlayAreaSizeSlider_ValueChanged" Value="25"/>
-                <Slider x:Name="playSquareSizeSlider" Grid.Row="1" Grid.Column="1" SmallChange="1" Maximum="50" Minimum="10" TickPlacement="TopLeft" LargeChange="5" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="PlaySquareSizeSlider_ValueChanged" Value="20"/>
-                <Slider x:Name="speedSlider" Grid.Row="1" Grid.Column="2" SmallChange="10" Maximum="1000" Minimum="10" TickPlacement="TopLeft" LargeChange="100" TickFrequency="10" IsSnapToTickEnabled="True" ValueChanged="SpeedSlider_ValueChanged" Value="200"/>
-                <Slider x:Name="fruitSpawnAmountSlider" Grid.Row="1" Grid.Column="3" SmallChange="1" Maximum="5" Minimum="1" TickPlacement="TopLeft" LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="FruitSpawnAmountSlider_ValueChanged" Value="1"/>
+                <Slider x:Name="playAreaSizeSlider" Grid.Row="1" Grid.Column="0" SmallChange="2" Maximum="75" Minimum="11" TickPlacement="TopLeft" LargeChange="10" TickFrequency="2" IsSnapToTickEnabled="True" ValueChanged="PlayAreaSizeSlider_ValueChanged" Value="25" Focusable="False"/>
+                <Slider x:Name="playSquareSizeSlider" Grid.Row="1" Grid.Column="1" SmallChange="1" Maximum="50" Minimum="10" TickPlacement="TopLeft" LargeChange="5" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="PlaySquareSizeSlider_ValueChanged" Value="20" Focusable="False"/>
+                <Slider x:Name="speedSlider" Grid.Row="1" Grid.Column="2" SmallChange="10" Maximum="1000" Minimum="10" TickPlacement="TopLeft" LargeChange="100" TickFrequency="10" IsSnapToTickEnabled="True" ValueChanged="SpeedSlider_ValueChanged" Value="200" Focusable="False"/>
+                <Slider x:Name="fruitSpawnAmountSlider" Grid.Row="1" Grid.Column="3" SmallChange="1" Maximum="5" Minimum="1" TickPlacement="TopLeft" LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="FruitSpawnAmountSlider_ValueChanged" Value="1" Focusable="False"/>
 
                 <Label x:Name="playAreaSizeLabel" Grid.Row="2" Grid.Column="0" Foreground="White" HorizontalAlignment="Center"></Label>
                 <Label x:Name="playSquareSizeLabel" Grid.Row="2" Grid.Column="1" Foreground="White" HorizontalAlignment="Center"></Label>
