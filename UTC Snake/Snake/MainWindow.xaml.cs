@@ -210,8 +210,10 @@ namespace Snake {
                 bar.RowDefinitions[1].Height = new GridLength(0);
                 bar.RowDefinitions[2].Height = new GridLength(0);
                 barIsHidden = true;
-                if (needsReload)
+                if (needsReload) {
                     LoadPlayArea();
+                    LoadIcons();
+                }
                 needsReload = false;
             } else if (barIsHidden){
                 bar.RowDefinitions[1].Height = GridLength.Auto;
