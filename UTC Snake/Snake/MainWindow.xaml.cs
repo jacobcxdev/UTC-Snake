@@ -1,18 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Reflection;
 
@@ -25,11 +18,10 @@ namespace Snake {
             InitializeComponent();
         }
 
-        class Geometry {
-            public int MaxX = 25;
-            public int MaxY = 25;
-            public int Width = 20;
-            public int Height = 20;
+        class Settings {
+            public int PlayAreaSize;
+            public int PlaySquareSize;
+            public int FruitSpawnAmount;
         }
 
         class Position {
@@ -37,10 +29,14 @@ namespace Snake {
             public int Y;
         }
 
-        Geometry geo = new Geometry();
+        Settings settings = new Settings() {
+            PlayAreaSize = 25,
+            PlaySquareSize = 20
+        };
 
-        List<Position> playerPos = new List<Position>();
-        List<Position> fruitPos = new List<Position>();
+        DispatcherTimer timer = new DispatcherTimer() {
+            Interval = TimeSpan.FromMilliseconds(200)
+        };
 
         Dictionary<string, List<List<Position>>> icons = new Dictionary<string, List<List<Position>>> {
             { "1", new List<List<Position>> { new List<Position>(), new List<Position>() } },
@@ -50,14 +46,18 @@ namespace Snake {
         };
         Dictionary<string, ContentControl> iconsOrig = new Dictionary<string, ContentControl>();
 
-        DispatcherTimer timer = new DispatcherTimer() {
-            Interval = TimeSpan.FromMilliseconds(200)
-        };
+        List<Position> playerPos = new List<Position>();
+        List<Position> fruitPos = new List<Position>();
 
 
+        bool settingsBarIsLoaded = false;
+        bool needsReload = false;
+        bool barIsHidden = true;
         bool isInGame = false;
         bool isPaused = false;
         bool isCountingDown = false;
+        int pendingPlayAreaSize = 0;
+        int pendingPlaySquareSize = 0;
         int pendingDirection = 0;
         int direction = 0;
         int score = 0;
@@ -92,8 +92,26 @@ namespace Snake {
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e) {
-            for (int i = 0; i < geo.MaxX; i++) {
-                for (int j = 0; j < geo.MaxY; j++) {
+            playArea.Children.Clear();
+            LoadPlayArea();
+
+            timer.Tick += TimerEvent;
+
+            UpdateScore();
+            UpdatePlayAreaSize();
+            UpdatePlaySquareSize();
+            UpdateSpeed();
+            UpdateFruitSpawnAmount();
+
+            playPauseButton.Focus();
+
+            ShowHideBar(true);
+        }
+
+        private void LoadPlayArea() {
+            playArea.Children.Clear();
+            for (int i = 0; i < settings.PlayAreaSize; i++)
+                for (int j = 0; j < settings.PlayAreaSize; j++) {
                     ColumnDefinition column = new ColumnDefinition {
                         Width = GridLength.Auto
                     };
@@ -102,13 +120,14 @@ namespace Snake {
                     };
 
                     Label playSquare = new Label {
-                        Width = geo.Width,
-                        Height = geo.Width,
+                        Width = settings.PlaySquareSize,
+                        Height = settings.PlaySquareSize,
                         Background = new SolidColorBrush(Colors.Black),
                         Name = String.Format("playSquare_{0}_{1}_", i, j),
                         Padding = new Thickness(0),
                         HorizontalContentAlignment = HorizontalAlignment.Center,
-                        VerticalContentAlignment = VerticalAlignment.Center
+                        VerticalContentAlignment = VerticalAlignment.Center,
+                        FontSize = settings.PlaySquareSize * 0.6
                     };
 
                     playArea.ColumnDefinitions.Add(column);
@@ -118,7 +137,13 @@ namespace Snake {
                     Grid.SetColumn(playSquare, i);
                     Grid.SetRow(playSquare, j);
                 }
-            }
+
+            icons = new Dictionary<string, List<List<Position>>> {
+                { "1", new List<List<Position>> { new List<Position>(), new List<Position>() } },
+                { "2", new List<List<Position>> { new List<Position>(), new List<Position>() } },
+                { "3", new List<List<Position>> { new List<Position>(), new List<Position>() } },
+                { "pause", new List<List<Position>> { new List<Position>(), new List<Position>() } }
+            };
 
             Dictionary<int, int[]> one = new Dictionary<int, int[]> {
                 { 0, new int[] { 0, 0, 1, 0, 0 } },
@@ -131,8 +156,8 @@ namespace Snake {
             for (int i = 0; i < one.Count; i++)
                 for (int j = 0; j < one.Count; j++) {
                     Position position = new Position {
-                        X = geo.MaxX / 2 - one.Count / 2 + j,
-                        Y = geo.MaxY / 2 - one.Count / 2 + i
+                        X = settings.PlayAreaSize / 2 - one.Count / 2 + j,
+                        Y = settings.PlayAreaSize / 2 - one.Count / 2 + i
                     };
                     switch (one[i][j]) {
                         case (0):
@@ -155,8 +180,8 @@ namespace Snake {
             for (int i = 0; i < two.Count; i++)
                 for (int j = 0; j < two.Count; j++) {
                     Position position = new Position {
-                        X = geo.MaxX / 2 - two.Count / 2 + j,
-                        Y = geo.MaxY / 2 - two.Count / 2 + i
+                        X = settings.PlayAreaSize / 2 - two.Count / 2 + j,
+                        Y = settings.PlayAreaSize / 2 - two.Count / 2 + i
                     };
                     switch (two[i][j]) {
                         case (0):
@@ -179,8 +204,8 @@ namespace Snake {
             for (int i = 0; i < three.Count; i++)
                 for (int j = 0; j < three.Count; j++) {
                     Position position = new Position {
-                        X = geo.MaxX / 2 - three.Count / 2 + j,
-                        Y = geo.MaxY / 2 - three.Count / 2 + i
+                        X = settings.PlayAreaSize / 2 - three.Count / 2 + j,
+                        Y = settings.PlayAreaSize / 2 - three.Count / 2 + i
                     };
                     switch (three[i][j]) {
                         case (0):
@@ -203,8 +228,8 @@ namespace Snake {
             for (int i = 0; i < pause.Count; i++)
                 for (int j = 0; j < pause.Count; j++) {
                     Position position = new Position {
-                        X = geo.MaxX / 2 - pause.Count / 2 + j,
-                        Y = geo.MaxY / 2 - pause.Count / 2 + i
+                        X = settings.PlayAreaSize / 2 - pause.Count / 2 + j,
+                        Y = settings.PlayAreaSize / 2 - pause.Count / 2 + i
                     };
                     switch (pause[i][j]) {
                         case (0):
@@ -215,12 +240,88 @@ namespace Snake {
                             break;
                     }
                 }
+        }
 
-            timer.Tick += TimerEvent;
+        private void ShowHideBar(bool hide = false) {
+            if (hide || !barIsHidden) {
+                bar.RowDefinitions[1].Height = new GridLength(0);
+                bar.RowDefinitions[2].Height = new GridLength(0);
+                barIsHidden = true;
+                if (needsReload)
+                    LoadPlayArea();
+                needsReload = false;
+            } else if (barIsHidden){
+                bar.RowDefinitions[1].Height = GridLength.Auto;
+                bar.RowDefinitions[2].Height = GridLength.Auto;
+                barIsHidden = false;
+            }
+        }
 
-            UpdateScore();
+        private void SettingsButton_Click(object sender, RoutedEventArgs e) {
+            if (settings.PlayAreaSize != pendingPlayAreaSize && !isInGame) {
+                settings.PlayAreaSize = pendingPlayAreaSize;
+                needsReload = true;
+            } else {
+                UpdatePlayAreaSize();
+            }
 
-            play.Focus();
+            if (settings.PlaySquareSize != pendingPlaySquareSize && !isInGame) {
+                settings.PlaySquareSize = pendingPlaySquareSize;
+                needsReload = true;
+            } else {
+                UpdatePlaySquareSize();
+            }
+
+            ShowHideBar();
+            settingsBarIsLoaded = true;
+        }
+
+        private void FruitSpawnAmountSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
+            if (settingsBarIsLoaded)
+                UpdateFruitSpawnAmount();
+        }
+
+        private void UpdateFruitSpawnAmount() {
+            settings.FruitSpawnAmount = (int)fruitSpawnAmountSlider.Value;
+            fruitSpawnAmountLabel.Content = String.Format("Fruit Spawn No. : {0}", settings.FruitSpawnAmount);
+        }
+
+        private void SpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
+            if (settingsBarIsLoaded)
+                UpdateSpeed();
+        }
+
+        private void UpdateSpeed() {
+            timer.Interval = TimeSpan.FromMilliseconds((int)speedSlider.Value);
+            speedLabel.Content = String.Format("Game Speed : {0}", (int)speedSlider.Value);
+        }
+
+        private void PlaySquareSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
+            if (settingsBarIsLoaded)
+                UpdatePlaySquareSize();
+        }
+
+        private void UpdatePlaySquareSize() {
+            pendingPlaySquareSize = (int)playSquareSizeSlider.Value;
+            if (isInGame) {
+                playSquareSizeSlider.Value = settings.PlaySquareSize;
+                pendingPlaySquareSize = settings.PlaySquareSize;
+            }
+            playSquareSizeLabel.Content = String.Format("Square Size : {0}", pendingPlaySquareSize);
+        }
+
+        private void PlayAreaSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
+            if (settingsBarIsLoaded)
+                UpdatePlayAreaSize();
+        }
+
+        private void UpdatePlayAreaSize() {
+            pendingPlayAreaSize = (int)playAreaSizeSlider.Value;
+            if (isInGame) {
+                playAreaSizeSlider.Value = settings.PlayAreaSize;
+                pendingPlayAreaSize = settings.PlayAreaSize;
+            }
+            playAreaSizeLabel.Content = String.Format("Grid Size : {0}", pendingPlayAreaSize);
         }
 
         private void CopyControl(Control sourceControl, Control targetControl) {
@@ -272,14 +373,14 @@ namespace Snake {
         private void PauseIcon() {
             isPaused = true;
             timer.Stop();
-            Paint(icons["pause"], new SolidColorBrush(Colors.SlateGray));
+            Paint(icons["pause"], new SolidColorBrush(Colors.DimGray));
         }
 
         private async void PlayIcon() {
             isCountingDown = true;
             Wash(icons["pause"]);
             for (int i = 3; i > 0; i--) {
-                Paint(icons[i.ToString()], new SolidColorBrush(Colors.SlateGray));
+                Paint(icons[i.ToString()], new SolidColorBrush(Colors.DimGray));
                 await Task.Delay(1000);
                 Wash(icons[i.ToString()]);
             }
@@ -288,7 +389,7 @@ namespace Snake {
             isCountingDown = false;
         }
 
-        private void PlayPause_Click(object sender, RoutedEventArgs e) {
+        private void PlayPauseButton_Click(object sender, RoutedEventArgs e) {
             if (isCountingDown) {
                 return;
             } else if (isInGame && isPaused) {
@@ -321,7 +422,7 @@ namespace Snake {
         private void NewGame() {
             isInGame = true;
 
-            playerPos.Add(RandomPosition(geo.MaxX / 2));
+            playerPos.Add(RandomPosition(settings.PlayAreaSize / 2));
             SetSquareColor(playerPos[0], new SolidColorBrush(Colors.Red));
 
             PlaceFruit(null, true);
@@ -356,7 +457,7 @@ namespace Snake {
                         X = playerPos[0].X,
                         Y = playerPos[0].Y - distance
                     };
-                    if (newPos0.Y >= 0 && newPos0.Y < geo.MaxX) {
+                    if (newPos0.Y >= 0 && newPos0.Y < settings.PlayAreaSize) {
                         foreach (Position position in playerPos) {
                             if (position.X == newPos0.X && position.Y == newPos0.Y) {
                                 Reset();
@@ -374,7 +475,7 @@ namespace Snake {
                         X = playerPos[0].X,
                         Y = playerPos[0].Y + distance
                     };
-                    if (newPos1.Y >= 0 && newPos1.Y < geo.MaxX) {
+                    if (newPos1.Y >= 0 && newPos1.Y < settings.PlayAreaSize) {
                         foreach (Position position in playerPos) {
                             if (position.X == newPos1.X && position.Y == newPos1.Y) {
                                 Reset();
@@ -392,7 +493,7 @@ namespace Snake {
                         X = playerPos[0].X - distance,
                         Y = playerPos[0].Y
                     };
-                    if (newPos2.X >= 0 && newPos2.X < geo.MaxX) {
+                    if (newPos2.X >= 0 && newPos2.X < settings.PlayAreaSize) {
                         foreach (Position position in playerPos) {
                             if (position.X == newPos2.X && position.Y == newPos2.Y) {
                                 Reset();
@@ -410,7 +511,7 @@ namespace Snake {
                         X = playerPos[0].X + distance,
                         Y = playerPos[0].Y
                     };
-                    if (newPos3.X >= 0 && newPos3.X < geo.MaxX) {
+                    if (newPos3.X >= 0 && newPos3.X < settings.PlayAreaSize) {
                         foreach (Position position in playerPos) {
                             if (position.X == newPos3.X && position.Y == newPos3.Y) {
                                 Reset();
@@ -516,8 +617,8 @@ namespace Snake {
             bool isUnderSnake = false;
 
             do {
-                position.X = rnd.Next(minDistanceFromEdge, geo.MaxX - minDistanceFromEdge);
-                position.Y = rnd.Next(minDistanceFromEdge, geo.MaxY - minDistanceFromEdge);
+                position.X = rnd.Next(minDistanceFromEdge, settings.PlayAreaSize - minDistanceFromEdge);
+                position.Y = rnd.Next(minDistanceFromEdge, settings.PlayAreaSize - minDistanceFromEdge);
 
                 foreach (Position playerPos in playerPos) {
                     if (position.X == playerPos.X && position.Y == playerPos.Y) {
@@ -531,7 +632,7 @@ namespace Snake {
             return position;
         }
 
-        private void PlaceFruit(Position originalPosition = null, bool genNew = false) {
+        private async void PlaceFruit(Position originalPosition = null, bool genNew = false) {
             List<Position> rm = new List<Position>();
             foreach (Position fruitPosition in fruitPos) {
                 if (playerPos[0].X == fruitPosition.X && playerPos[0].Y == fruitPosition.Y) {
@@ -545,13 +646,26 @@ namespace Snake {
                 fruitPos.Remove(rmPos);
             }
             if (genNew) {
-                Position position = RandomPosition();
-                fruitPos.Add(position);
-                SetSquareColor(position, new SolidColorBrush(Colors.Green));
+                if (fruitPos.Count < 0) {
+                    fruitSpawnAmountSlider.Minimum = 1;
+                }
+
+                for (int i = 0; i < settings.FruitSpawnAmount; i++) {
+                    Position position = RandomPosition();
+                    fruitPos.Add(position);
+                    SetSquareColor(position, new SolidColorBrush(Colors.Green));
+                    await Task.Delay(1);
+                }
                 
                 if (originalPosition != null) {
                     playerPos.Add(AddBody(originalPosition));
                     UpdateScore(1);
+                }
+
+                if (fruitPos.Count <= 1) {
+                    fruitSpawnAmountSlider.Minimum = 1;
+                } else {
+                    fruitSpawnAmountSlider.Minimum = 0;
                 }
             }
         }
