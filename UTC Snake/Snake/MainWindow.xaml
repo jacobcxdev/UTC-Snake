@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Snake"
         mc:Ignorable="d"
-        Title="Snake" SizeToContent="WidthAndHeight" Loaded="Window_Loaded" Background="#FF121212" KeyDown="Window_KeyDown">
+        Title="Snake" SizeToContent="WidthAndHeight" Loaded="Window_Loaded" Background="#FF121212" KeyDown="Window_KeyDown" ResizeMode="CanMinimize">
     <Grid HorizontalAlignment="Center">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

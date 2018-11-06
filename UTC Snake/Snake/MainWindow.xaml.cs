@@ -38,12 +38,7 @@ namespace Snake {
             Interval = TimeSpan.FromMilliseconds(200)
         };
 
-        Dictionary<string, List<List<Position>>> icons = new Dictionary<string, List<List<Position>>> {
-            { "1", new List<List<Position>> { new List<Position>(), new List<Position>() } },
-            { "2", new List<List<Position>> { new List<Position>(), new List<Position>() } },
-            { "3", new List<List<Position>> { new List<Position>(), new List<Position>() } },
-            { "pause", new List<List<Position>> { new List<Position>(), new List<Position>() } }
-        };
+        Dictionary<string, List<List<Position>>> icons = new Dictionary<string, List<List<Position>>> { };
         Dictionary<string, ContentControl> iconsOrig = new Dictionary<string, ContentControl>();
 
         List<Position> playerPos = new List<Position>();
@@ -94,6 +89,7 @@ namespace Snake {
         private void Window_Loaded(object sender, RoutedEventArgs e) {
             playArea.Children.Clear();
             LoadPlayArea();
+            LoadIcons();
 
             timer.Tick += TimerEvent;
 
@@ -137,14 +133,9 @@ namespace Snake {
                     Grid.SetColumn(playSquare, i);
                     Grid.SetRow(playSquare, j);
                 }
+        }
 
-            icons = new Dictionary<string, List<List<Position>>> {
-                { "1", new List<List<Position>> { new List<Position>(), new List<Position>() } },
-                { "2", new List<List<Position>> { new List<Position>(), new List<Position>() } },
-                { "3", new List<List<Position>> { new List<Position>(), new List<Position>() } },
-                { "pause", new List<List<Position>> { new List<Position>(), new List<Position>() } }
-            };
-
+        private void LoadIcons() {
             Dictionary<int, int[]> one = new Dictionary<int, int[]> {
                 { 0, new int[] { 0, 0, 1, 0, 0 } },
                 { 1, new int[] { 0, 1, 1, 0, 0 } },
@@ -152,22 +143,6 @@ namespace Snake {
                 { 3, new int[] { 0, 0, 1, 0, 0 } },
                 { 4, new int[] { 1, 1, 1, 1, 1 } },
             };
-
-            for (int i = 0; i < one.Count; i++)
-                for (int j = 0; j < one.Count; j++) {
-                    Position position = new Position {
-                        X = settings.PlayAreaSize / 2 - one.Count / 2 + j,
-                        Y = settings.PlayAreaSize / 2 - one.Count / 2 + i
-                    };
-                    switch (one[i][j]) {
-                        case (0):
-                            icons["1"][0].Add(position);
-                            break;
-                        case (1):
-                            icons["1"][1].Add(position);
-                            break;
-                    }
-                }
 
             Dictionary<int, int[]> two = new Dictionary<int, int[]> {
                 { 0, new int[] { 0, 1, 1, 1, 0 } },
@@ -177,22 +152,6 @@ namespace Snake {
                 { 4, new int[] { 1, 1, 1, 1, 1 } },
             };
 
-            for (int i = 0; i < two.Count; i++)
-                for (int j = 0; j < two.Count; j++) {
-                    Position position = new Position {
-                        X = settings.PlayAreaSize / 2 - two.Count / 2 + j,
-                        Y = settings.PlayAreaSize / 2 - two.Count / 2 + i
-                    };
-                    switch (two[i][j]) {
-                        case (0):
-                            icons["2"][0].Add(position);
-                            break;
-                        case (1):
-                            icons["2"][1].Add(position);
-                            break;
-                    }
-                }
-
             Dictionary<int, int[]> three = new Dictionary<int, int[]> {
                 { 0, new int[] { 0, 1, 1, 1, 0 } },
                 { 1, new int[] { 1, 0, 0, 0, 1 } },
@@ -200,22 +159,6 @@ namespace Snake {
                 { 3, new int[] { 1, 0, 0, 0, 1 } },
                 { 4, new int[] { 0, 1, 1, 1, 0 } },
             };
-
-            for (int i = 0; i < three.Count; i++)
-                for (int j = 0; j < three.Count; j++) {
-                    Position position = new Position {
-                        X = settings.PlayAreaSize / 2 - three.Count / 2 + j,
-                        Y = settings.PlayAreaSize / 2 - three.Count / 2 + i
-                    };
-                    switch (three[i][j]) {
-                        case (0):
-                            icons["3"][0].Add(position);
-                            break;
-                        case (1):
-                            icons["3"][1].Add(position);
-                            break;
-                    }
-                }
 
             Dictionary<int, int[]> pause = new Dictionary<int, int[]> {
                 { 0, new int[] { 1, 1, 0, 1, 1 } },
@@ -225,18 +168,38 @@ namespace Snake {
                 { 4, new int[] { 1, 1, 0, 1, 1 } },
             };
 
-            for (int i = 0; i < pause.Count; i++)
-                for (int j = 0; j < pause.Count; j++) {
+            Dictionary<int, int[]> sad = new Dictionary<int, int[]> {
+                { 0, new int[] { 0, 0, 0, 0, 0, 0, 0 } },
+                { 1, new int[] { 0, 1, 1, 0, 1, 1, 0 } },
+                { 2, new int[] { 0, 0, 0, 0, 0, 0, 1 } },
+                { 3, new int[] { 0, 0, 0, 0, 0, 0, 0 } },
+                { 4, new int[] { 0, 1, 1, 1, 1, 1, 0 } },
+                { 5, new int[] { 0, 1, 0, 0, 0, 1, 0 } },
+                { 6, new int[] { 0, 1, 0, 0, 0, 1, 0 } },
+            };
+
+            AddIcon(one, "1");
+            AddIcon(two, "2");
+            AddIcon(three, "3");
+            AddIcon(pause, "pause");
+            AddIcon(sad, "sad");
+        }
+
+        private void AddIcon(Dictionary<int, int[]> icon, string name) {
+            icons[name] = new List<List<Position>> { new List<Position>(), new List<Position>() };
+
+            for (int i = 0; i < icon.Count; i++)
+                for (int j = 0; j < icon.Count; j++) {
                     Position position = new Position {
-                        X = settings.PlayAreaSize / 2 - pause.Count / 2 + j,
-                        Y = settings.PlayAreaSize / 2 - pause.Count / 2 + i
+                        X = settings.PlayAreaSize / 2 - icon.Count / 2 + j,
+                        Y = settings.PlayAreaSize / 2 - icon.Count / 2 + i
                     };
-                    switch (pause[i][j]) {
+                    switch (icon[i][j]) {
                         case (0):
-                            icons["pause"][0].Add(position);
+                            icons[name][0].Add(position);
                             break;
                         case (1):
-                            icons["pause"][1].Add(position);
+                            icons[name][1].Add(position);
                             break;
                     }
                 }
@@ -417,9 +380,13 @@ namespace Snake {
             pendingDirection = 0;
             direction = 0;
             score = 0;
+
+            Paint(icons["sad"], new SolidColorBrush(Colors.DimGray));
         }
 
         private void NewGame() {
+            Paint(icons["sad"], new SolidColorBrush(Colors.Black));
+
             isInGame = true;
 
             playerPos.Add(RandomPosition(settings.PlayAreaSize / 2));
