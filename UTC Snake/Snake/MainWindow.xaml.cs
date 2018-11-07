@@ -525,6 +525,7 @@ namespace Snake {
             pending.pendingDirection = 0;
             gameState.direction = 0;
             gameState.score = 0;
+            fruitSpawnAmountSlider.Value = 1;
 
             Paint(glyphs["sad"], new SolidColorBrush(Colors.DimGray));
         }
