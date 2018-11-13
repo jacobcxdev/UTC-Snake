@@ -242,59 +242,43 @@ namespace Snake {
         /*    User Input    */
 
         
-        private void Window_KeyDown(object sender, KeyEventArgs e) {    // Window_KeyDown is called every time the user presses a key. If the key is one of W, A, S, D, Up, Down, Left, Right (movement direction) or Space (play/pause), it will call the relevant functions.
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e) {    // Window_PreviewKeyDown is called every time the user presses a key. If the key is one of W, A, S, D, Up, Down, Left, Right (movement direction) or Space (play/pause), it will call the relevant functions.
             if (gameStateBools.isInGame && !gameStateBools.isPaused) {
                 switch (e.Key) {
                     case (Key.Space):    // Space "Clicks" the playPauseButton.
                         playPauseButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                         break;
-                    case (Key.W):    // W changes the pendingDirection to move up.
+                    case (Key.W):
+                    case (Key.Up):    // W or Up changes the pendingDirection to move up.
                         if (gameState.direction != 1) {
                             pending.pendingDirection = 0;
                             ArrowFromDirection();
                         }
+                        e.Handled = true;
                         break;
-                    case (Key.S):    // S changes the pendingDirection to move down.
+                    case (Key.S):
+                    case (Key.Down):    // S or Down changes the pendingDirection to move down.
                         if (gameState.direction != 0) {
                             pending.pendingDirection = 1;
                             ArrowFromDirection();
                         }
+                        e.Handled = true;
                         break;
-                    case (Key.A):    // A changes the pendingDirection to move left.
+                    case (Key.A):
+                    case (Key.Left):    // A or Left changes the pendingDirection to move left.
                         if (gameState.direction != 3) {
                             pending.pendingDirection = 2;
                             ArrowFromDirection();
                         }
+                        e.Handled = true;
                         break;
-                    case (Key.D):    // D changes the pendingDirection to move right.
+                    case (Key.D):
+                    case (Key.Right):    // D or Right changes the pendingDirection to move right.
                         if (gameState.direction != 2) {
                             pending.pendingDirection = 3;
                             ArrowFromDirection();
                         }
-                        break;
-                    case (Key.Up):    // Up changes the pendingDirection to move up.
-                        if (gameState.direction != 1) {
-                            pending.pendingDirection = 0;
-                            ArrowFromDirection();
-                        }
-                        break;
-                    case (Key.Down):    // Down changes the pendingDirection to move down.
-                        if (gameState.direction != 0) {
-                            pending.pendingDirection = 1;
-                            ArrowFromDirection();
-                        }
-                        break;
-                    case (Key.Left):    // Left changes the pendingDirection to move left.
-                        if (gameState.direction != 3) {
-                            pending.pendingDirection = 2;
-                            ArrowFromDirection();
-                        }
-                        break;
-                    case (Key.Right):    // Right changes the pendingDirection to move right.
-                        if (gameState.direction != 2) {
-                            pending.pendingDirection = 3;
-                            ArrowFromDirection();
-                        }
+                        e.Handled = true;
                         break;
                 }
             }
