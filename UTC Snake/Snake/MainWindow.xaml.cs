@@ -43,7 +43,7 @@ namespace Snake {
 
         class Position {
 
-            // The Position class defines a class with which you can store coordinates for the playArea.
+            // The Position class defines a class with which you can store coordinates for the playArea. I decided to define my own class instead of using the Point class because it better suited my needs.
 
             public int X;
             public int Y;
