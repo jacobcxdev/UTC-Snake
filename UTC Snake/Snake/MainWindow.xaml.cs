@@ -247,6 +247,7 @@ namespace Snake {
                 switch (e.Key) {
                     case (Key.Space):    // Space "Clicks" the playPauseButton.
                         playPauseButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        e.Handled = true;
                         break;
                     case (Key.W):
                     case (Key.Up):    // W or Up changes the pendingDirection to move up.
